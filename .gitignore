@@ -1,0 +1,35 @@
+# --- Executables ---
+# Ignore the compiled binaries for each exercise
+poly_mul
+sparse_msvm
+mergesort_parallel
+*.exe
+*.out
+
+# --- Object Files and Libraries ---
+*.o
+*.a
+*.so
+
+# --- Experiments & Results ---
+# According to the handout, you will generate experimental data 
+# It is better to keep raw data and auto-generated graphs out of the repo
+results/
+data/
+*.csv
+*.png
+*.jpg
+*.pdf
+!report.pdf  # Do NOT ignore your final report PDF 
+
+# --- OS & IDE Specific ---
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# --- Compressed Files ---
+# Ignore the final submission zip/rar to avoid duplicates in git history 
+*.zip
+*.rar
+*.tar.gz
