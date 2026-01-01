@@ -23,9 +23,21 @@ int main(int argc, char* argv[]) {
         printf("\nMust Input:\n\t0 for Serial\n\t1 for Parallel\n");
     }
     
-    // Κανουμε malloc
-    int *A = (int*)malloc(sizeof(int)* arraySize);
 
+    // arrays
+    // Κανουμε εδω malloc και οχι μεσα στο παραλληλο section γιατι μετα θα ειχαμε θεμα
+    // το malloc λειτουργει με mutex. Θα ειχαμε θεματα αναμονής
+    // Φυσικα το malloc γινεται για χρηση του Heap αντι του Stack
+    int *A = (int*)malloc(sizeof(int)* arraySize);
+    int *B = (int*)malloc(arraySize * sizeof(int));
+    int *C = (int*)malloc(arraySize * sizeof(int));
+
+    Bundle *bundle = (Bundle*)malloc(sizeof(Bundle));
+
+    bundle->A = A;
+    bundle->B = B;
+    bundle->C = C;
+    
     // Φτιαχουμε ντετερμινιστικα τον πινακα
     srand(271225);
     for (int i = 0; i < arraySize; i++)
@@ -40,7 +52,7 @@ int main(int argc, char* argv[]) {
     {
         printf("\nRunning Serial Program\n");
         time = getTime();
-        serialMergeSort(A, 0 , arraySize - 1);
+        serialMergeSort(bundle, 0 , arraySize - 1);
         time = getTime() - time;
     }
     else if (mode == 1)
@@ -57,7 +69,7 @@ int main(int argc, char* argv[]) {
             // δουλευει μονο ενα νημα τα αλλα περιμενουν
             #pragma omp single
             {
-                parallelMergeSort(A, 0, arraySize - 1);
+                parallelMergeSort(bundle, 0, arraySize - 1);
             }
         }
 
@@ -79,6 +91,9 @@ int main(int argc, char* argv[]) {
     printf("\nTime: %.6f\n", time);
 
     free(A);
+    free(B);
+    free(C);
+    free(bundle);
     
     return 0;
 }

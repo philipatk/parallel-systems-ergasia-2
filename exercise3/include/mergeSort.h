@@ -1,5 +1,11 @@
 #pragma once
 
-void serialMergeSort(int* A,  int left, int right);
+typedef struct{
+    int* A;
+    int* B;
+    int* C;
+} Bundle;
 
-void parallelMergeSort(int* A, int left, int right);
+void serialMergeSort(Bundle* arrays,  int left, int right);
+
+void parallelMergeSort(Bundle* arrays, int left, int right);

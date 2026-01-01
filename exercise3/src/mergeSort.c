@@ -1,40 +1,38 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<omp.h>
-#define LIMIT 100
+#include"mergeSort.h"
+#define LIMIT 1000
 
 // Συναρτηση ταξινομησης
-void merge(int* A, int left, int mid, int right) {
+void merge(Bundle* arrays, int left, int mid, int right) {
 
     int bSize = mid - left + 1;
     int cSize = right - mid;
 
-    int *B = (int*)malloc(bSize * sizeof(int));
-    int *C = (int*)malloc(cSize * sizeof(int));
-
     // δημιουργουμε τους δυο temp πινακες
-    for (int i = 0; i < bSize; i++)
+    for (int i = left; i < left + bSize; i++)
     {
-        B[i] = A[left + i];
+        arrays->B[i] = arrays->A[i];
     }
 
-    for (int i = 0; i < cSize; i++)
+    for (int i = mid + 1; i < mid + 1 + cSize; i++)
     {
-        C[i] = A[mid + 1 + i];
+        arrays->C[i] = arrays->A[i];
     }
 
     int i = 0;
     int j = 0;
-    int k = left;
+    int k = 0;
 
     // βαζουμε με προτεραιοτητα το μεγαλυτερο στοιχειο αναμεσα στους δυο temp πινακες
     while (i < bSize && j < cSize) {
-        if (B[i] >= C[j]) {
-            A[k] = B[i];
+        if (arrays->B[left + i] >= arrays->C[mid + 1 + j]) {
+            arrays->A[left + k] = arrays->B[left + i];
             i++;
         }
         else {
-            A[k] = C[j];
+            arrays->A[left + k] = arrays->C[mid + 1 + j];
             j++;
         }
         k++;
@@ -42,37 +40,34 @@ void merge(int* A, int left, int mid, int right) {
     
     // Βαζουμε οσα στοιχεια λειπουν
     while (i < bSize) {
-        A[k] = B[i];
+        arrays->A[left + k] = arrays->B[left + i];
         i++;
         k++;
     }
 
     while (j < cSize) {
-        A[k] = C[j];
+        arrays->A[left + k] = arrays->C[mid + 1 + j];
         j++;
         k++;
     }
-
-    free(B);
-    free(C);
 }
 
 // Συναρτηση διαιρεσης με αναδρομη
-void serialMergeSort(int* A, int left, int right) {
+void serialMergeSort(Bundle* arrays, int left, int right) {
 
     if (left == right)
         return;
 
     int mid = (left + right)/2;
 
-    serialMergeSort(A, left, mid);
-    serialMergeSort(A, mid + 1, right);
+    serialMergeSort(arrays, left, mid);
+    serialMergeSort(arrays, mid + 1, right);
 
-    merge(A, left, mid, right);
+    merge(arrays, left, mid, right);
 }
 
 // Συναρτηση παρραλληλης ταξινομησης
-void parallelMergeSort(int* A, int left, int right) {
+void parallelMergeSort(Bundle* arrays, int left, int right) {
     
     if (left == right)
         return;
@@ -85,14 +80,14 @@ void parallelMergeSort(int* A, int left, int right) {
     // βαζουμε ενα "task" στο todo list για να το κανει ενα νημα απο αυτα που περιμενουν
     // το shared variable ειναι ετσι ωστε οταν τελειωσει η εντολη και βγει out of bounds να η χαθουν τα δεδομενα. αλλιως το A θα αλλαζε
     // "τοπικα" μοναχα για το ενα νημα που εκανε τις πραξεις.
-    #pragma omp task shared(A) if(size > LIMIT)
-    parallelMergeSort(A, left, mid);
+    #pragma omp task shared(arrays) if(size > LIMIT)
+    parallelMergeSort(arrays, left, mid);
 
     // διαβασε πιο πανω
-    #pragma omp task shared(A) if(size > LIMIT)
-    parallelMergeSort(A, mid + 1, right);
+    #pragma omp task shared(arrays) if(size > LIMIT)
+    parallelMergeSort(arrays, mid + 1, right);
 
     // εδω πρεπει να εχουν τελειωσει τα προηγουμενα δυο βηματα για να γινει το σορταρισμα οποτε βαζουμε ενα barrier
     #pragma omp taskwait
-    merge(A, left, mid, right);
+    merge(arrays, left, mid, right);
 }
