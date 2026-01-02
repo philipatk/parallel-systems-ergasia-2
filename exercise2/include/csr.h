@@ -1,5 +1,15 @@
 #pragma once
 
-void csrInitSerial(int** initialArray, int arraySide, int numOfThreads);
+typedef struct{
 
-void csrInitParallel(int** initialArray, int arraySide, int numOfThreads);
+    int* V;
+    int* ColIndex;
+    int* RowIndex;
+
+} CsrBundle;
+
+void csrInitSerial(int** initialArray, CsrBundle* csr, int arraySide);
+
+void csrInitParallel(int** initialArray, CsrBundle* csr, int arraySide);
+
+void csrMulSerial(CsrBundle* csr, int* vector, int arraySide, int numOfIterations);

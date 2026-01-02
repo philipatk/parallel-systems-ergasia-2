@@ -1,20 +1,14 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<omp.h>
+#include"csr.h"
 
 #define ZEROSPERCENTAGE 40
 
 
-void csrInitSerial(int** initialArray, int arraySide, int numOfThreads) {
+void csrInitSerial(int** initialArray, CsrBundle* csr, int arraySide) {
 
-    int arraySize = arraySide * arraySide;
-    int nonZeroValues = (arraySize * (100 - ZEROSPERCENTAGE))/100;
-
-    int* V = (int*)malloc(sizeof(int)* nonZeroValues);
-    int* ColIndex = (int*)malloc(sizeof(int) * nonZeroValues);
-    int* RowIndex = (int*)malloc(sizeof(int) * (arraySide + 1));
-
-    RowIndex[0] = 0;
+    csr->RowIndex[0] = 0;
     int k = 0;
 
     for (int i = 0; i < arraySide; i++)
@@ -26,24 +20,16 @@ void csrInitSerial(int** initialArray, int arraySide, int numOfThreads) {
                 continue;
             }   
 
-            V[k] = initialArray[i][j];
-            ColIndex[k] = j;
+            csr->V[k] = initialArray[i][j];
+            csr->ColIndex[k] = j;
     
             k++;
         }
-        RowIndex[i + 1] = k;
+        csr->RowIndex[i + 1] = k;
     }
 }
 
-void csrInitParallel(int** initialArray, int arraySide, int numOfThreads) {
-
-    int arraySize = arraySide * arraySide;
-    int nonZeroValues = (arraySize * (100 - ZEROSPERCENTAGE))/100;
-
-    int* V = (int*)malloc(sizeof(int)* nonZeroValues);
-    int* ColIndex = (int*)malloc(sizeof(int) * nonZeroValues);
-    int* RowIndex = (int*)calloc(arraySide + 1, sizeof(int));
-
+void csrInitParallel(int** initialArray, CsrBundle* csr, int arraySide) {
 
     #pragma omp parallel for
     for (int i = 0; i < arraySide; i++)
@@ -59,12 +45,12 @@ void csrInitParallel(int** initialArray, int arraySide, int numOfThreads) {
             count++;
         }
         
-        RowIndex[i + 1] = count;
+        csr->RowIndex[i + 1] = count;
     }
 
     for (int i = 0; i < arraySide; i++)
     {
-        RowIndex[i + 1] += RowIndex[i];
+        csr->RowIndex[i + 1] += csr->RowIndex[i];
     }
     
     int k = 0;
@@ -72,7 +58,7 @@ void csrInitParallel(int** initialArray, int arraySide, int numOfThreads) {
     #pragma omp parallel for private(k)
     for (int i = 0; i < arraySide; i++)
     {
-        k = RowIndex[i];
+        k = csr->RowIndex[i];
 
         for (int j = 0; j < arraySide; j++)
         {
@@ -81,9 +67,13 @@ void csrInitParallel(int** initialArray, int arraySide, int numOfThreads) {
                 continue;
             }
 
-            V[k] = initialArray[i][j];
-            ColIndex[k] = j;
+            csr->V[k] = initialArray[i][j];
+            csr->ColIndex[k] = j;
             k++;
         }
     }
+}
+
+void csrMulSerial(CsrBundle* csr, int* vector, int arraySide, int numOfIterations) {
+    
 }
