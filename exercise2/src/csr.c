@@ -3,14 +3,36 @@
 #include<omp.h>
 #include"csr.h"
 
-#define ZEROSPERCENTAGE 40
-
 
 void csrInitSerial(int** initialArray, CsrBundle* csr, int arraySide) {
 
-    csr->RowIndex[0] = 0;
+    csr->RowIndex = (int*)calloc(arraySide + 1, sizeof(int));
+    
+    for (int i = 0; i < arraySide; i++)
+    {
+        for (int j = 0; j < arraySide; j++)
+        {
+            if (initialArray[i][j] == 0)
+            {
+                continue;
+            }
+            
+            csr->RowIndex[i + 1]++;
+        }
+    }
+    
+    for (int i = 0; i < arraySide; i++)
+    {
+        csr->RowIndex[i + 1] += csr->RowIndex[i];
+    }
+    
+    int nonZeroValues = csr->RowIndex[arraySide];
+    csr->V = (int*)malloc(sizeof(int)* nonZeroValues);
+    csr->ColIndex = (int*)malloc(sizeof(int) * nonZeroValues);
+    
+    
     int k = 0;
-
+    
     for (int i = 0; i < arraySide; i++)
     {
         for (int j = 0; j < arraySide; j++)
@@ -25,12 +47,13 @@ void csrInitSerial(int** initialArray, CsrBundle* csr, int arraySide) {
     
             k++;
         }
-        csr->RowIndex[i + 1] = k;
     }
 }
 
 void csrInitParallel(int** initialArray, CsrBundle* csr, int arraySide) {
 
+    csr->RowIndex = (int*)calloc(arraySide + 1, sizeof(int));
+    
     #pragma omp parallel for
     for (int i = 0; i < arraySide; i++)
     {
@@ -53,6 +76,11 @@ void csrInitParallel(int** initialArray, CsrBundle* csr, int arraySide) {
         csr->RowIndex[i + 1] += csr->RowIndex[i];
     }
     
+    int nonZeroValues = csr->RowIndex[arraySide];
+    csr->V = (int*)malloc(sizeof(int)* nonZeroValues);
+    csr->ColIndex = (int*)malloc(sizeof(int) * nonZeroValues);
+    
+
     int k = 0;
 
     #pragma omp parallel for private(k)
