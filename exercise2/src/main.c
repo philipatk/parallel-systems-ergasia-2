@@ -56,11 +56,15 @@ int main(int argc, char* argv[]) {
     csrInitSerial(initialArray, arraySide, numOfThreads);
     csrInitTimeSerial = getTime() - csrInitTimeSerial;
     
+    double csrInitTimeParallel = getTime();
+    csrInitParallel(initialArray, arraySide, numOfThreads);
+    csrInitTimeParallel = getTime() - csrInitTimeParallel;
+    
 
 
 
-
-
+    free(initialArray);
+    free(vector);
 
     return 0;
 }
