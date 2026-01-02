@@ -1,6 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
-// #include<omp.h>
+#include<omp.h>
 #include"csr.h"
 #include"timer.h"
 
@@ -51,6 +51,8 @@ int main(int argc, char* argv[]) {
 
         vector[i] = rand();
     }
+
+    omp_set_num_threads(numOfThreads);
     
     double csrInitTimeSerial = getTime();
     csrInitSerial(initialArray, arraySide, numOfThreads);

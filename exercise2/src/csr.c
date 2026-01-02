@@ -11,10 +11,10 @@ void csrInitSerial(int** initialArray, int arraySide, int numOfThreads) {
     int nonZeroValues = (arraySize * (100 - ZEROSPERCENTAGE))/100;
 
     int* V = (int*)malloc(sizeof(int)* nonZeroValues);
-    int* RowIndex = (int*)malloc(sizeof(int) * nonZeroValues);
-    int* ColIndex = (int*)malloc(sizeof(int) * (arraySide + 1));
+    int* ColIndex = (int*)malloc(sizeof(int) * nonZeroValues);
+    int* RowIndex = (int*)malloc(sizeof(int) * (arraySide + 1));
 
-    ColIndex[0] = 0;
+    RowIndex[0] = 0;
     int k = 0;
 
     for (int i = 0; i < arraySide; i++)
@@ -27,11 +27,11 @@ void csrInitSerial(int** initialArray, int arraySide, int numOfThreads) {
             }   
 
             V[k] = initialArray[i][j];
-            RowIndex[k] = j;
+            ColIndex[k] = j;
     
             k++;
         }
-        ColIndex[i + 1] = k;
+        RowIndex[i + 1] = k;
     }
 }
 
@@ -41,18 +41,39 @@ void csrInitParallel(int** initialArray, int arraySide, int numOfThreads) {
     int nonZeroValues = (arraySize * (100 - ZEROSPERCENTAGE))/100;
 
     int* V = (int*)malloc(sizeof(int)* nonZeroValues);
-    int* RowIndex = (int*)malloc(sizeof(int) * nonZeroValues);
-    int* ColIndex = (int*)malloc(sizeof(int) * (arraySide + 1));
+    int* ColIndex = (int*)malloc(sizeof(int) * nonZeroValues);
+    int* RowIndex = (int*)calloc(arraySide + 1, sizeof(int));
 
-    ColIndex[0] = 0;
-    int k = 0;
 
-    int sum = 0;
-    omp_set_num_threads(numOfThreads);
-
-   #pragma omp parallel collapsed(2) shared(sum)
+    #pragma omp parallel for
     for (int i = 0; i < arraySide; i++)
     {
+        int count = 0;
+        for (int j = 0; j < arraySide; j++)
+        {
+            if (initialArray[i][j] == 0)
+            {
+                continue;
+            }
+            
+            count++;
+        }
+        
+        RowIndex[i + 1] = count;
+    }
+
+    for (int i = 0; i < arraySide; i++)
+    {
+        RowIndex[i + 1] += RowIndex[i];
+    }
+    
+    int k = 0;
+
+    #pragma omp parallel for private(k)
+    for (int i = 0; i < arraySide; i++)
+    {
+        k = RowIndex[i];
+
         for (int j = 0; j < arraySide; j++)
         {
             if (initialArray[i][j] == 0)
@@ -60,31 +81,9 @@ void csrInitParallel(int** initialArray, int arraySide, int numOfThreads) {
                 continue;
             }
 
-            for (int k = 0; k < arraySide + 1 && V[k] == initialArray[i][j]; k++)
-            {
-                V[k] = initialArray[i][j];
-                RowIndex[k] = j;
-                sum += 1;
-            }
-        }
-        ColIndex[i + 1] = sum;
-    }
-
-    int k = 0;
-    #pragma omp parallel collapsed(2)
-    for (int i = 0; i < arraySide; i++)
-    {
-        for (int j = 0; j < arraySide; j++)
-        {   
-            if (initialArray[i][j] == 0)
-            {
-                continue;
-            }
-            
             V[k] = initialArray[i][j];
+            ColIndex[k] = j;
             k++;
         }
-        
     }
-    
 }
