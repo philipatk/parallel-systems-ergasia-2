@@ -26,13 +26,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    int** initialArray = (int**)malloc(sizeof(int*) * arraySide);
+    long long int** initialArray = (long long int**)malloc(sizeof(long long int*) * arraySide);
     for (int i = 0; i < arraySide; i++)
     {
         initialArray[i] = (int*)malloc(sizeof(int) * arraySide);
     }
 
     int* vector = (int*)malloc(sizeof(int)* arraySide);
+    int* vectorSwitch = (int*)malloc(sizeof(int)* arraySide);
 
     srand((int)getTime());
     
@@ -51,10 +52,6 @@ int main(int argc, char* argv[]) {
 
         vector[i] = (rand() % (2 * RAND_MAX + 1)) - RAND_MAX;
     }
-
-
-    int arraySize = arraySide * arraySide;
-    int nonZeroValues = (arraySize * (100 - percentageOfZeros))/100;
 
     CsrBundle* csrSerial = (CsrBundle*)malloc(sizeof(CsrBundle));
     CsrBundle* csrParallel = (CsrBundle*)malloc(sizeof(CsrBundle));
@@ -78,13 +75,32 @@ int main(int argc, char* argv[]) {
     // csrMulTimeParallel = getTime() - csrMulTimeParallel;
     
     
-    // double initialArrayMulTimeSerial = getTime();
-    // initialArrayMulSerial(initialArray, arraySide, vector);
-    // initialArrayMulTimeSerial = getTime() - initialArrayMulTimeSerial;
+    double initialArrayMulTimeSerial = getTime();
+
+    for (int i = 0; i < numOfIterations; i++)
+    {
+        initialArrayMulSerial(initialArray, arraySide, vector, vectorSwitch);
+        
+        int* vecTemp = vector;
+        vector = vectorSwitch;
+        vectorSwitch = vecTemp;
+    }
+
+    initialArrayMulTimeSerial = getTime() - initialArrayMulTimeSerial;
     
-    // double initialArrayMulTimeParallel = getTime();
-    // initialArrayMulParallel(initialArray, arraySide, vector);
-    // initialArrayMulTimeParallel = getTime() - initialArrayMulTimeParallel;
+    
+    double initialArrayMulTimeParallel = getTime();
+    
+    for (int i = 0; i < numOfIterations; i++)
+    {
+        initialArrayMulParallel(initialArray, arraySide, vector, vectorSwitch);
+        
+        int* vecTemp = vector;
+        vector = vectorSwitch;
+        vectorSwitch = vecTemp;
+    }
+    
+    initialArrayMulTimeParallel = getTime() - initialArrayMulTimeParallel;
     
     
     
