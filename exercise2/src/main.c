@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 #include<omp.h>
 #include"csr.h"
 #include"timer.h"
@@ -28,7 +29,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Φτιαχνουμε τον Αρχικο Πινακα
-    long long int** initialArray = (long long int**)malloc(sizeof(long long int*) * arraySide);
+    int** initialArray = (int**)malloc(sizeof(int*) * arraySide);
     for (int i = 0; i < arraySide; i++)
     {
         initialArray[i] = (int*)malloc(sizeof(int) * arraySide);
@@ -37,11 +38,14 @@ int main(int argc, char* argv[]) {
     // Φτιαχνουμε το διανυσμα + το vecSwitch που βοηθαει στο να κανουμε τραμπα τα δεδομενα για επαναληψη
     int* vector = (int*)malloc(sizeof(int)* arraySide);
     int* vectorSwitch = (int*)malloc(sizeof(int)* arraySide);
+    // Copy του vector για να εχουμε εναν μπουσουλα
+    int* vectorCopy = (int*)malloc(sizeof(int)* arraySide);
 
     // βαζουμε το seed
     srand((int)getTime());
     
     // Γεμιζουμε το πινακα με τυχαιες τιμες (συνηθως μηδεν) 
+    // Καναμε τις τιμες μικρες με ευρος (-1000, 1000) διοτι θα γινοτατε overflow
     for (int i = 0; i < arraySide; i++)
     {      
         for (int j = 0; j < arraySide; j++)
@@ -52,10 +56,11 @@ int main(int argc, char* argv[]) {
                 continue;
             }
             
-            initialArray[i][j] = (rand() % (2 * RAND_MAX + 1)) - RAND_MAX;
+            initialArray[i][j] = ((rand() % 2001) - 1000);
         }
 
-        vector[i] = (rand() % (2 * RAND_MAX + 1)) - RAND_MAX;
+        vector[i] = ((rand() % 2001) - 1000);
+        vectorCopy[i] = vector[i];
     }
 
     // Φτιαχνουμε τη δομη για τον csr πινακα (κοιτα csr.h)
@@ -88,12 +93,13 @@ int main(int argc, char* argv[]) {
     csrMulTimeSerial = getTime() - csrMulTimeSerial;
     
     // Πολλαπλασιαζουμε τον csr με το διανυσμα ΠΑΡΑΛΛΗΛΑ
+    memcpy(vector, vectorCopy, sizeof(int) * arraySide);
 
     double csrMulTimeParallel = getTime();
     
     for (int i = 0; i < numOfIterations; i++)
     {
-        csrMulParallel(csrSerial, arraySide, vector, vectorSwitch);
+        csrMulParallel(csrParallel, arraySide, vector, vectorSwitch);
         int* vecTemp = vector;
         vector = vectorSwitch;
         vectorSwitch = vecTemp;        
@@ -102,6 +108,9 @@ int main(int argc, char* argv[]) {
     
     
     // Πολλαπλασιαζουμε τον αρχικο πινακα ΣΕΙΡΙΑΚΑ
+
+    memcpy(vector, vectorCopy, sizeof(int) * arraySide);
+
     double initialArrayMulTimeSerial = getTime();
 
     for (int i = 0; i < numOfIterations; i++)
@@ -116,6 +125,9 @@ int main(int argc, char* argv[]) {
     
     
     // Πολλαπλασιαζουμε τον αρχικο πινακα ΠΑΡΑΛΛΗΛΑ
+
+    memcpy(vector, vectorCopy, sizeof(int) * arraySide);
+
     double initialArrayMulTimeParallel = getTime();
     
     for (int i = 0; i < numOfIterations; i++)
@@ -155,6 +167,7 @@ int main(int argc, char* argv[]) {
     
     free(initialArray);
     free(vectorSwitch);
+    free(vectorCopy);
     free(vector);
     
     free(csrSerial->V);

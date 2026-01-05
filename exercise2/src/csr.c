@@ -122,7 +122,9 @@ void csrMulSerial(CsrBundle* csr, int arraySide, int* vector, int* vectorSwitch)
     // Μεσω της δομης του csr εκμεταλευομαστε τους πινακες και υπολογιζουμε τις θεσεις 
     int start;
     int end;
-
+    
+    int sum;
+    
     // Ουσιαστικα παιρνουμε ενα μεμονομενο κομματι (start - end) με τη βοηθεια του Rowindex. 
     // Ετσι ξερουμε ποσα στοιχεια ειναι για τη συγκεκριμενη γραμμη.
     // Επειτα πολλαππλασιαζουμε τη καθε ΣΤΗΛΗ με το στοιχειο του διανυσματος που αντιστοιχει.
@@ -132,49 +134,86 @@ void csrMulSerial(CsrBundle* csr, int arraySide, int* vector, int* vectorSwitch)
     {
         start = csr->RowIndex[i];
         end = csr->RowIndex[i + 1];
-
-        int sum = 0;
-
+        
+        sum = 0;
+        
         for (int j = start; j < end; j++)
         {
             sum += csr->V[j] * vector[csr->ColIndex[j]];
         }
         
-        vectorSwitch[i] = sum;
+        vectorSwitch[i] = sum % 10000;
     }   
 }
+
+
+// Συναρτηση που Πολλαπλασιαζει τον csr ΠΑΡΑΛΛΗΛΑ
+void csrMulParallel(CsrBundle* csr, int arraySide, int* vector, int* vectorSwitch) {
+    
+    int start;
+    int end;
+    int sum;
+    
+    // Απλως βαζουμε αλλη μια parallel for για την εξωτερικη λουπα
+    // ΟΜΩΣ πρεπει τα προηγουμενως δηλωμενα να μπουνε ιδιωτικα για το καθε νημα
+    #pragma omp parallel for private(start, end, sum)
+    for (int i = 0; i < arraySide; i++)
+    {
+        start = csr->RowIndex[i];
+        end = csr->RowIndex[i + 1];
+        
+        sum = 0;
+        
+        for (int j = start; j < end; j++)
+        {
+            sum += csr->V[j] * vector[csr->ColIndex[j]];
+        }
+
+        // 1 Εχουμε τοπικη  μεταβλητη sum για ταχυτητα. Το sum ειναι καταχωρητης ενω ο πινακας βρισκεται στη ραμ
+        // Ουσαστικα sum = πραξη καταχωρητη. πινακας = εγγραφη στη μνημη
+
+        // 2 κανουμε mod για να μη γινει overflow και κλαιμε
+        vectorSwitch[i] = sum % 10000;
+    } 
+
+}
+
 
 // Συναρτηση που Πολλαπλασιαζει τον αρχικο πινακα ΣΕΙΡΙΑΚΑ
 void initialArrayMulSerial(int** initArray, int arraySide, int* vector, int* vectorSwitch) {
 
+    int sum;
+
     // Μηδενιζουμε το sum καθε γραμμη του πινακα διοτι χρησιμοποιειται κατ επαναληψη και πρεπει να ειναι αδειο
     for (int i = 0; i < arraySide; i++)
     {
-        int sum = 0;
+        sum = 0;
 
         for (int j = 0; j < arraySide; j++)
         {
             sum += initArray[i][j] * vector[j];
         }
 
-        vectorSwitch[i] = sum;
+        vectorSwitch[i] = sum % 10000;
     }
 }
 
 void initialArrayMulParallel(int** initArray, int arraySide, int* vector, int* vectorSwitch) {
 
+    int sum;
+
     // Εδω παραλληλοποιουμε την εξωτερικη λουπα
-    // Το sum ειναι ιδιωτικο για καθε νημα αφου το καθενα δημιουργει το δικο του
-    #pragma omp parallel for
+    // Το sum ειναι ιδιωτικο για καθε νημα
+    #pragma omp parallel for private(sum)
     for (int i = 0; i < arraySide; i++)
     {
-        int sum = 0;
+        sum = 0;
 
         for (int j = 0; j < arraySide; j++)
         {
             sum += initArray[i][j] * vector[j];
         }
-        vectorSwitch[i] = sum;
+        vectorSwitch[i] = sum % 10000;
  
     }
 }
