@@ -94,7 +94,7 @@ void csrInitParallel(int** initialArray, CsrBundle* csr, int arraySide) {
             {
                 continue;
             }
-
+ 
             csr->V[k] = initialArray[i][j];
             csr->ColIndex[k] = j;
             k++;
@@ -104,12 +104,23 @@ void csrInitParallel(int** initialArray, CsrBundle* csr, int arraySide) {
 
 void csrMulSerial(CsrBundle* csr, int arraySide, int* vector, int* vectorSwitch) {
     
-    // int sum = 0;
-    // for (int i = 0; i < csr->RowIndex[arraySide]; i++)
-    // {
-    //     sum+= csr->V[i] * vector[];
-    // }
-    
+    int start;
+    int end;
+
+    for (int i = 0; i < arraySide; i++)
+    {
+        start = csr->RowIndex[i];
+        end = csr->RowIndex[i + 1];
+
+        int sum = 0;
+
+        for (int j = start; j < end; j++)
+        {
+            sum += csr->V[j] * vector[csr->ColIndex[j]];
+        }
+        
+        vectorSwitch[i] = sum;
+    }   
 }
 
 
@@ -117,21 +128,29 @@ void initialArrayMulSerial(int** initArray, int arraySide, int* vector, int* vec
 
     for (int i = 0; i < arraySide; i++)
     {
+        int sum = 0;
+
         for (int j = 0; j < arraySide; j++)
         {
-            vectorSwitch[j] += initArray[i][j] * vector[j];
+            sum += initArray[i][j] * vector[j];
         }
+
+        vectorSwitch[i] = sum;
     }
 }
 
 void initialArrayMulParallel(int** initArray, int arraySide, int* vector, int* vectorSwitch) {
 
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for
     for (int i = 0; i < arraySide; i++)
     {
+        int sum = 0;
+
         for (int j = 0; j < arraySide; j++)
         {
-            vectorSwitch[j] += initArray[i][j] * vector[j];
+            sum += initArray[i][j] * vector[j];
         }
+        vectorSwitch[i] = sum;
+ 
     }
 }

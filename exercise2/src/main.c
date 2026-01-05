@@ -67,7 +67,15 @@ int main(int argc, char* argv[]) {
     csrInitTimeParallel = getTime() - csrInitTimeParallel;
     
     double csrMulTimeSerial = getTime();
-    csrMulSerial(csrSerial, vector, arraySide, numOfIterations);
+
+    for (int i = 0; i < numOfIterations; i++)
+    {
+        csrMulSerial(csrSerial, arraySide, vector, vectorSwitch);            
+        int* vecTemp = vector;
+        vector = vectorSwitch;
+        vectorSwitch = vecTemp;
+    }
+
     csrMulTimeSerial = getTime() - csrMulTimeSerial;
     
     // double csrMulTimeParallel = getTime();
@@ -127,6 +135,7 @@ int main(int argc, char* argv[]) {
     }
     
     free(initialArray);
+    free(vectorSwitch);
     free(vector);
     
     free(csrSerial->V);
