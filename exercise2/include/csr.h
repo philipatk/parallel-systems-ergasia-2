@@ -1,5 +1,6 @@
 #pragma once
 
+// Αυτη ειναι η κλασσικη δομη ενος csr πινακα
 typedef struct{
 
     int* V;
@@ -8,6 +9,7 @@ typedef struct{
 
 } CsrBundle;
 
+// Παρακατω οι συναρτησεις που ζητουνται απο την εκφωνηση
 void csrInitSerial(int** initialArray, CsrBundle* csr, int arraySide);
 
 void csrInitParallel(int** initialArray, CsrBundle* csr, int arraySide);
