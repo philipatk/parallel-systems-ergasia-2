@@ -29,17 +29,21 @@ int main(int argc, char* argv[]) {
     }
     
     // Φτιαχνουμε τον Αρχικο Πινακα
-    int** initialArray = (int**)malloc(sizeof(int*) * arraySide);
+    int** initialArraySerial = (int**)malloc(sizeof(int*) * arraySide);
+    int** initialArrayParallel = (int**)malloc(sizeof(int*) * arraySide);
+
     for (int i = 0; i < arraySide; i++)
     {
-        initialArray[i] = (int*)malloc(sizeof(int) * arraySide);
+        initialArraySerial[i] = (int*)malloc(sizeof(int) * arraySide);
+        initialArrayParallel[i] = (int*)malloc(sizeof(int) * arraySide);        
     }
 
     // Φτιαχνουμε το διανυσμα + το vecSwitch που βοηθαει στο να κανουμε τραμπα τα δεδομενα για επαναληψη
     int* vector = (int*)malloc(sizeof(int)* arraySide);
     int* vectorSwitch = (int*)malloc(sizeof(int)* arraySide);
-    // Copy του vector για να εχουμε εναν μπουσουλα
+    // Copys του vector για να εχουμε εναν μπουσουλα
     int* vectorCopy = (int*)malloc(sizeof(int)* arraySide);
+    int* vectorResultSerial = (int*)malloc(sizeof(int)* arraySide);
 
     // βαζουμε το seed
     srand((int)getTime());
@@ -52,11 +56,13 @@ int main(int argc, char* argv[]) {
         {
             if (((double)rand()/RAND_MAX) * 100 <= (double)percentageOfZeros)
             {
-                initialArray[i][j] = 0;
+                initialArraySerial[i][j] = 0;
+                initialArrayParallel[i][j] = 0;
                 continue;
             }
             
-            initialArray[i][j] = ((rand() % 2001) - 1000);
+            initialArraySerial[i][j] = ((rand() % 2001) - 1000);
+            initialArrayParallel[i][j] = initialArraySerial[i][j];
         }
 
         vector[i] = ((rand() % 2001) - 1000);
@@ -69,17 +75,52 @@ int main(int argc, char* argv[]) {
 
     // Θετουμε τον αριθμο νηματων
     omp_set_num_threads(numOfThreads);
+
+    printf("\nInitializing csr Array Serial...\n");
     
     // Γεμιζουμε τον csr ΣΕΡΙΑΚΑ
     double csrInitTimeSerial = getTime();
-    csrInitSerial(initialArray, csrSerial, arraySide);
+    csrInitSerial(initialArraySerial, csrSerial, arraySide);
     csrInitTimeSerial = getTime() - csrInitTimeSerial;
     
+
+    printf("\nInitializing csr Array Parallel...\n");
+
     // Γεμιζουμε τον csr ΠΑΡΑΛΛΗΛΑ
     double csrInitTimeParallel = getTime();
-    csrInitParallel(initialArray, csrParallel, arraySide);
+    csrInitParallel(initialArrayParallel, csrParallel, arraySide);
     csrInitTimeParallel = getTime() - csrInitTimeParallel;
+
+    printf("\nTesting if Arrays Match...\n");
+
+    // Εξετάζουμε αν οι πινακες csr ειναι ιδιοι
+    for (int i = 0; i <= arraySide; i++) 
+        {
+            if (csrSerial->RowIndex[i] != csrParallel->RowIndex[i]) 
+            {
+                printf("\ncsr Arrays Do Not Match\n");
+                fflush(stdout);
+                return 1;
+            }
+        }
+
+    int nonZeroValues = csrSerial->RowIndex[arraySide]; 
+
+    for (int i = 0; i < nonZeroValues; i++) 
+    {
     
+        if (csrSerial->V[i] != csrParallel->V[i] || csrSerial->ColIndex[i] != csrParallel->ColIndex[i]) 
+        {
+            printf("\ncsr Arrays Do Not Match\n");
+            fflush(stdout);
+            return 1;
+        }
+    }
+
+    printf("\ncsr Arrays Match!\n");
+
+    printf("\nMultyplying csr Serial...\n");
+
     // Πολλαπλασιαζουμε τον csr με το διανυσμα ΣΕΙΡΙΑΚΑ
     double csrMulTimeSerial = getTime();
 
@@ -91,11 +132,18 @@ int main(int argc, char* argv[]) {
         vectorSwitch = vecTemp;
     }
     csrMulTimeSerial = getTime() - csrMulTimeSerial;
+
+    // Μεταφερουμε τα δεδομενα του σειριακου σε ενα αντιγραφο για συγκριση
+    memcpy(vectorResultSerial, vectorSwitch, sizeof(int) * arraySide);
     
     // Πολλαπλασιαζουμε τον csr με το διανυσμα ΠΑΡΑΛΛΗΛΑ
     memcpy(vector, vectorCopy, sizeof(int) * arraySide);
 
+    printf("\nMultyplying csr Parallel...\n");
+
     double csrMulTimeParallel = getTime();
+
+    printf("\nChecking If Results Match...\n");
     
     for (int i = 0; i < numOfIterations; i++)
     {
@@ -105,8 +153,22 @@ int main(int argc, char* argv[]) {
         vectorSwitch = vecTemp;        
     }
     csrMulTimeParallel = getTime() - csrMulTimeParallel;
+
+    for (int i = 0; i < arraySide; i++) {
+        if (vectorSwitch[i] == vectorResultSerial[i]) {
+            continue;
+        }
+
+        printf("\nVector Results (Serial - Parallel) Do Not Match!\n");
+        fflush(stdout);
+        return 1;
+    }
     
+    printf("\nVector Results (Serial - Parallel) Match!\n");    
     
+
+    printf("\nMultiplying initArray Serial...\n");
+
     // Πολλαπλασιαζουμε τον αρχικο πινακα ΣΕΙΡΙΑΚΑ
 
     memcpy(vector, vectorCopy, sizeof(int) * arraySide);
@@ -115,7 +177,7 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i < numOfIterations; i++)
     {
-        initialArrayMulSerial(initialArray, arraySide, vector, vectorSwitch);
+        initialArrayMulSerial(initialArraySerial, arraySide, vector, vectorSwitch);
         
         int* vecTemp = vector;
         vector = vectorSwitch;
@@ -123,16 +185,20 @@ int main(int argc, char* argv[]) {
     }
     initialArrayMulTimeSerial = getTime() - initialArrayMulTimeSerial;
     
+    // Μεταφερουμε τα δεδομενα του σειριακου σε ενα αντιγραφο για συγκριση    
+    memcpy(vectorResultSerial, vectorSwitch, sizeof(int) * arraySide);
     
     // Πολλαπλασιαζουμε τον αρχικο πινακα ΠΑΡΑΛΛΗΛΑ
 
     memcpy(vector, vectorCopy, sizeof(int) * arraySide);
 
+    printf("\nMultiplying initArray Parallel...\n");
+
     double initialArrayMulTimeParallel = getTime();
     
     for (int i = 0; i < numOfIterations; i++)
     {
-        initialArrayMulParallel(initialArray, arraySide, vector, vectorSwitch);
+        initialArrayMulParallel(initialArrayParallel, arraySide, vector, vectorSwitch);
         
         int* vecTemp = vector;
         vector = vectorSwitch;
@@ -140,32 +206,33 @@ int main(int argc, char* argv[]) {
     }
     initialArrayMulTimeParallel = getTime() - initialArrayMulTimeParallel;
     
+    for (int i = 0; i < arraySide; i++) {
+        if (vectorSwitch[i] == vectorResultSerial[i]) {
+            continue;
+        }
+
+        printf("\nVector Results (Serial - Parallel) Do Not Match!\n");
+        fflush(stdout);
+        return 1;
+    }
+    
+    printf("\nVector Results (Serial - Parallel) Match!\n");    
     
     
-    // for (int i = 0; i < arraySide; i++)
-    // {
-        //     for (int j = 0; j < arraySide; j++)
-    //     {
-    //         if (csrParallel->V != csrSerial->V || csrParallel->RowIndex != csrSerial->RowIndex || csrParallel->ColIndex != csrSerial->ColIndex)
-    //         {
-        //             printf("\ncsr Arrays Do Not Match\n");
-        //             fflush(stdout);
-        //             return 1;
-        //         }
-        
-        //     }
-        
-        // }
-        // printf("\ncsr Arrays Match!\n");    
-            
-    
+
+    printf("\nFreeing Everything And Exiting...\n");
+    printf("\nGoodbye!\n");
+
     // ΚΑΝΟΥΜΕ ΦΡΙΜΠΕΣ
     for (int i = 0; i < arraySide; i++)
     {
-        free(initialArray[i]);
+        free(initialArraySerial[i]);
+        free(initialArrayParallel[i]);        
     }
     
-    free(initialArray);
+    free(initialArraySerial);
+    free(initialArrayParallel);
+    free(vectorResultSerial);
     free(vectorSwitch);
     free(vectorCopy);
     free(vector);
