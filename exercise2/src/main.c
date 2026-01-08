@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
 
     printf("\ncsr Arrays Match!\n");
 
-    printf("\nMultyplying csr Serial...\n");
+    printf("\nMultiplying csr Serial...\n");
 
     // Πολλαπλασιαζουμε τον csr με το διανυσμα ΣΕΙΡΙΑΚΑ
     double csrMulTimeSerial = getTime();
@@ -134,12 +134,12 @@ int main(int argc, char* argv[]) {
     csrMulTimeSerial = getTime() - csrMulTimeSerial;
 
     // Μεταφερουμε τα δεδομενα του σειριακου σε ενα αντιγραφο για συγκριση
-    memcpy(vectorResultSerial, vectorSwitch, sizeof(int) * arraySide);
+    memcpy(vectorResultSerial, vector, sizeof(int) * arraySide);
     
     // Πολλαπλασιαζουμε τον csr με το διανυσμα ΠΑΡΑΛΛΗΛΑ
     memcpy(vector, vectorCopy, sizeof(int) * arraySide);
 
-    printf("\nMultyplying csr Parallel...\n");
+    printf("\nMultiplying csr Parallel...\n");
 
     double csrMulTimeParallel = getTime();
 
@@ -155,7 +155,7 @@ int main(int argc, char* argv[]) {
     csrMulTimeParallel = getTime() - csrMulTimeParallel;
 
     for (int i = 0; i < arraySide; i++) {
-        if (vectorSwitch[i] == vectorResultSerial[i]) {
+        if (vector[i] == vectorResultSerial[i]) {
             continue;
         }
 
@@ -186,7 +186,7 @@ int main(int argc, char* argv[]) {
     initialArrayMulTimeSerial = getTime() - initialArrayMulTimeSerial;
     
     // Μεταφερουμε τα δεδομενα του σειριακου σε ενα αντιγραφο για συγκριση    
-    memcpy(vectorResultSerial, vectorSwitch, sizeof(int) * arraySide);
+    memcpy(vectorResultSerial, vector, sizeof(int) * arraySide);
     
     // Πολλαπλασιαζουμε τον αρχικο πινακα ΠΑΡΑΛΛΗΛΑ
 
@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
     initialArrayMulTimeParallel = getTime() - initialArrayMulTimeParallel;
     
     for (int i = 0; i < arraySide; i++) {
-        if (vectorSwitch[i] == vectorResultSerial[i]) {
+        if (vector[i] == vectorResultSerial[i]) {
             continue;
         }
 
@@ -218,7 +218,12 @@ int main(int argc, char* argv[]) {
     
     printf("\nVector Results (Serial - Parallel) Match!\n");    
     
-    
+    printf("\ncsr Initialization Serial: %f\n", csrInitTimeSerial);
+    printf("\ncsr Initialization Parallel: %f\n", csrInitTimeParallel);
+    printf("\ncsr Multiplication Serial: %f\n", csrMulTimeSerial);
+    printf("\ncsr Multiplication Parallel: %f\n", csrMulTimeParallel);
+    printf("\nInitial Array Multiplication Serial: %f\n", initialArrayMulTimeSerial);
+    printf("\nInitial Array Multiplication Parallel: %f\n", initialArrayMulTimeParallel);
 
     printf("\nFreeing Everything And Exiting...\n");
     printf("\nGoodbye!\n");
