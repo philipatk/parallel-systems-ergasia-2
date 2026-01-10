@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 #include<omp.h>
 #include "mergeSort.h"
 #include "timer.h"
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]) {
     srand(271225);
     for (int i = 0; i < arraySize; i++)
     {
-        A[i] = rand();
+        bundle->A[i] = rand();
     }
     
     // Αναλγογως τη λειτουργια μετραμε τον χρονο
@@ -79,7 +80,7 @@ int main(int argc, char* argv[]) {
     // Ελεγχουμε αν ειναι ταξινομημενος ο πινακας
     for (int i = 0; i < arraySize - 1; i++)
     {
-        if (!(A[i] >= A[i+1]))
+        if (!(bundle->A[i] >= bundle->A[i+1]))
         {
             printf("\nArray Is Not Sorted Correctly\n");
             return 1;

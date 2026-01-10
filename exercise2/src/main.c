@@ -76,7 +76,6 @@ int main(int argc, char* argv[]) {
     // Θετουμε τον αριθμο νηματων
     omp_set_num_threads(numOfThreads);
 
-    // printf("\nInitializing csr Array Serial...\n");
     
     // Γεμιζουμε τον csr ΣΕΡΙΑΚΑ
     double csrInitTimeSerial = getTime();
@@ -87,7 +86,6 @@ int main(int argc, char* argv[]) {
     printf("\ncsr Initialization Serial:\n\t\t\t\t\t %f\n", csrInitTimeSerial);
     
 
-    // printf("\nInitializing csr Array Parallel...\n");
 
     // Γεμιζουμε τον csr ΠΑΡΑΛΛΗΛΑ
     double csrInitTimeParallel = getTime();
@@ -96,7 +94,6 @@ int main(int argc, char* argv[]) {
 
     printf("\ncsr Initialization Parallel:\n\t\t\t\t\t %f\n", csrInitTimeParallel);
 
-    // printf("\nTesting if Arrays Match...\n");
 
     // Εξετάζουμε αν οι πινακες csr ειναι ιδιοι
     for (int i = 0; i <= arraySide; i++) 
@@ -124,7 +121,6 @@ int main(int argc, char* argv[]) {
 
     printf("\ncsr Arrays Match!\n");
 
-    // printf("\nMultiplying csr Serial...\n");
 
     // Πολλαπλασιαζουμε τον csr με το διανυσμα ΣΕΙΡΙΑΚΑ
     double csrMulTimeSerial = getTime();
@@ -146,11 +142,9 @@ int main(int argc, char* argv[]) {
     // Πολλαπλασιαζουμε τον csr με το διανυσμα ΠΑΡΑΛΛΗΛΑ
     memcpy(vector, vectorCopy, sizeof(int) * arraySide);
 
-    // printf("\nMultiplying csr Parallel...\n");
 
     double csrMulTimeParallel = getTime();
 
-    // printf("\nChecking If Results Match...\n");
     
     for (int i = 0; i < numOfIterations; i++)
     {
@@ -162,6 +156,8 @@ int main(int argc, char* argv[]) {
     csrMulTimeParallel = getTime() - csrMulTimeParallel;
 
     printf("\ncsr Multiplication Parallel:\n\t\t\t\t\t %f\n", csrMulTimeParallel);
+
+    // Ελεγχος οτι εβγαλαν τα ιδια νουμερα
 
     for (int i = 0; i < arraySide; i++) {
         if (vector[i] == vectorResultSerial[i]) {
@@ -176,7 +172,6 @@ int main(int argc, char* argv[]) {
     printf("\nVectors Match!\n");    
     
 
-    // printf("\nMultiplying initArray Serial...\n");
 
     // Πολλαπλασιαζουμε τον αρχικο πινακα ΣΕΙΡΙΑΚΑ
 
@@ -203,7 +198,6 @@ int main(int argc, char* argv[]) {
 
     memcpy(vector, vectorCopy, sizeof(int) * arraySide);
 
-    // printf("\nMultiplying initArray Parallel...\n");
 
     double initialArrayMulTimeParallel = getTime();
     
@@ -218,6 +212,8 @@ int main(int argc, char* argv[]) {
     initialArrayMulTimeParallel = getTime() - initialArrayMulTimeParallel;
  
     printf("\nInitial Array Multiplication Parallel:\n\t\t\t\t\t %f\n", initialArrayMulTimeParallel);
+
+    // Ελεγχος οτι εβγαλαν τα ιδια αποτελεσματα
     
     for (int i = 0; i < arraySide; i++) {
         if (vector[i] == vectorResultSerial[i]) {
