@@ -5,6 +5,7 @@
 
 #define SEED 42
 
+// this is the serial way
 void multiply_serial(int *p1, int *p2, int *res, int n) {
     for (int i = 0; i <= n; i++) {
         for (int j = 0; j <= n; j++) {
@@ -18,7 +19,7 @@ int min(int a, int b) { return (a < b) ? a : b; }
 int max(int a, int b) { return (a > b) ? a : b; }
 
 void multiply_parallel(int *p1, int *p2, int *res, int n) {
-
+// perelel loop dynamic makes it balance the load
 #pragma omp parallel for schedule(dynamic)
     for (int k = 0; k <= 2 * n; k++) {
         
@@ -31,7 +32,8 @@ void multiply_parallel(int *p1, int *p2, int *res, int n) {
         for (int i = start; i <= end; i++) {
             sum += p1[i] * p2[k - i];
         }
-        
+
+        // thread safe right final sum
         res[k] = sum;
     }
 }
@@ -45,7 +47,7 @@ int main(int argc, char *argv[])
 
     int n = atoi(argv[1]);
     int num_threads = atoi(argv[2]);
-    omp_set_num_threads(num_threads);
+    omp_set_num_threads(num_threads); // sets the number of threads
 
     int *poly1 = malloc((n + 1) * sizeof(int));
     int *poly2 = malloc((n + 1) * sizeof(int));
