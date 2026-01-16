@@ -1,2 +1,7 @@
 build/
 */build/
+benchmark_ex2.py
+benchmark_ex3.py
+compare_pth_omp.py
+execute.py
+script1.py
