@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
     printf("\nFreeing Everything And Exiting...\n");
     printf("\nGoodbye!\n");
 
-    // ΚΑΝΟΥΜΕ ΦΡΙΜΠΕΣ
+    // κανουμε free τα παντα
     for (int i = 0; i < arraySide; i++)
     {
         free(initialArraySerial[i]);
